@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Telegram</title>
+<style>
+:root {
+  --bg: #212121;
+  --card: #212121;
+  --line: #4a4a4a;
+  --text: #fff;
+  --muted: #a0a0a0;
+  --purple: #8774e1;
+  --purple-hover: #7a66d6;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 14px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.card {
+  width: 100%;
+  max-width: 390px;
+  padding: 6px 2px 28px;
+  background: transparent;
+  text-align: center;
+}
+
+.plane { width: 134px; height: 134px; margin: 0 auto 16px; }
+.plane svg { display: block; width: 100%; height: 100%; }
+
+h1 { margin: 0 0 6px; font-size: 24px; font-weight: 500; letter-spacing: -0.3px; }
+
+.subtitle {
+  margin: 0 auto 38px;
+  max-width: 330px;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* Поля с плавающей подписью */
+.field { position: relative; text-align: left; }
+.field + .field { margin-top: 19px; }
+
+.float-label {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  padding: 0 6px;
+  transform: translateY(-50%);
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  z-index: 2;
+  transition: top 0.15s, font-size 0.15s, color 0.2s;
+  pointer-events: none;
+}
+.field.filled .float-label,
+.field.open .float-label,
+.field:focus-within .float-label {
+  top: 0;
+  font-size: 13px;
+  background: var(--card);
+}
+
+.select-btn {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 24px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.flag:empty { display: none; }
+.flag { font-size: 22px; line-height: 1; width: 34px; flex: none; text-align: center; }
+.cname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.chev { width: 24px; height: 24px; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s; }
+
+.field.open .select-btn { border-color: var(--purple); }
+.field.open .float-label { color: var(--purple); }
+.field.open .chev { transform: rotate(180deg); stroke: var(--purple); }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 320px;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  overflow-y: auto;
+  background: #262626;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  overscroll-behavior: contain;
+}
+.dropdown[hidden] { display: none; }
+
+.dropdown li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px 12px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.dropdown li:hover { background: #2f2f2f; }
+.dropdown li.sel { background: rgba(135, 116, 225, 0.18); }
+.ccode { color: var(--muted); font-size: 14px; flex: none; }
+
+.dropdown::-webkit-scrollbar { width: 4px; }
+.dropdown::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+
+input.country-code {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: 0 20px;
+  border: 1.5px solid var(--line);
+  border-radius: 24px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input.country-code::placeholder { color: #666; }
+input.country-code:focus { border-color: var(--purple); }
+.field:focus-within .float-label { color: var(--purple); }
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin: 32px 0 54px 18px;
+  text-align: left;
+  font-size: 17px;
+  color: #fff;
+  cursor: pointer;
+}
+.remember input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 2px solid #5a5a5a;
+  border-radius: 5px;
+  background: transparent center / 16px no-repeat;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.remember input:checked {
+  border-color: var(--purple);
+  background-color: var(--purple);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+
+.primary {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.primary:hover { background: var(--purple-hover); }
+.primary:active { transform: scale(0.98); }
+
+.divider { display: none; }
+#viewPhone.valid .remember { margin-bottom: 26px; }
+#viewPhone.valid .primary { margin-bottom: 22px; }
+
+.secondary {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--purple);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.secondary:hover { background: rgba(135, 116, 225, 0.12); }
+
+.hint { min-height: 44px; margin: 18px 4px 22px; font-size: 14px; line-height: 1.5; color: var(--muted); text-align: center; }
+.hint.err { color: #ff7b7b; }
+.secondary:disabled { opacity: 0.4; cursor: default; background: transparent; }
+#otp:not(:placeholder-shown) { letter-spacing: 4px; }
+.field.error input.country-code { border-color: #ff6b6b; }
+.field.error .float-label { color: #ff6b6b; }
+.shake { animation: shake 0.4s; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+#subtitle b { color: #d2d2d2; font-weight: 600; }
+.subtitle.wide { max-width: none; font-size: 14.5px; line-height: 1.35; margin-bottom: 40px; }
+
+
+.phone-line { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 6px 0 12px; font-size: 20px; font-weight: 500; letter-spacing: -0.2px; }
+.phone-line[hidden] { display: none; }
+.edit { background: none; border: 0; padding: 8px; cursor: pointer; border-radius: 50%; display: grid; place-items: center; }
+.edit:hover { background: rgba(255, 255, 255, 0.08); }
+.edit svg { width: 24px; height: 24px; fill: none; stroke: #8a8a8a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.small-note { margin-top: 20px; color: #777; font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 420px) {
+  body { padding: 14px; }
+  .card { padding: 6px 2px 25px; }
+}
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="plane">
+      <svg viewBox="0 0 1024 1024" aria-hidden="true">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#37aee2"/>
+            <stop offset="1" stop-color="#1e96c8"/>
+          </linearGradient>
+        </defs>
+        <circle cx="507" cy="503" r="459" fill="url(#bg)"/>
+        <path fill="#fff" d="M217 497C217 487 225 482 232 480L705 293C725 288 738 295 735 312C725 380 690 540 655 720C648 738 625 745 608 735L493 648L420 590L352 557L237 520C225 516 217 508 217 497Z"/>
+        <path fill="#c8daea" d="M352 557L633 377C642 372 650 380 644 388L420 590L407 715C402 720 398 712 395 705Z"/>
+        <path fill="#a9c9dd" d="M420 590L493 646L424 712C415 720 408 718 407 716Z"/>
+      </svg>
+    </div>
+    <h1 id="title" data-i18n="title">Telegram</h1>
+    <div class="phone-line" id="phoneLine" hidden>
+      <span id="phoneText"></span>
+      <button class="edit" id="editBtn" type="button" aria-label="Изменить номер">
+        <svg viewBox="0 0 24 24"><path d="M4 20l1-4L17 4a2.1 2.1 0 013 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
+      </button>
+    </div>
+    <p class="subtitle" id="subtitle">Проверьте код страны и введите свой номер телефона.</p>
+
+    <div id="viewPhone">
+    <div class="field" id="countryField">
+      <span class="float-label" data-i18n="country">Страна</span>
+      <button class="select-btn" id="countryBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span class="flag" id="curFlag"></span>
+        <span class="cname" id="curName"></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <ul class="dropdown" id="list" role="listbox" hidden></ul>
+    </div>
+
+    <div class="field">
+      <span class="float-label" data-i18n="phone">Номер телефона</span>
+      <input class="country-code" id="code" type="tel" inputmode="tel" value="" autocomplete="tel">
+    </div>
+
+    <label class="remember">
+      <input type="checkbox" checked>
+      <span data-i18n="keep">Запомнить меня</span>
+    </label>
+
+    <button class="primary" id="continueBtn" type="button" hidden data-i18n="next">Продолжить</button>
+
+    <div class="divider"></div>
+
+    <button class="secondary" type="button" data-i18n="qr">Вход по QR-коду</button>
+    <button class="secondary" type="button" data-i18n="passkey">Вход с ключом доступа</button>
+    <button class="secondary" id="langBtn" type="button" data-i18n="lang">Continue in English</button>
+    </div>
+
+    <div id="viewCode" hidden>
+      <div class="field">
+        <input class="country-code" id="otp" type="text" inputmode="numeric" maxlength="5" autocomplete="one-time-code" placeholder="Код" data-i18n-ph="code">
+      </div>
+      <p class="hint" id="hint"></p>
+      <button class="secondary" id="resend" type="button" disabled data-i18n="resend">Отправить код ещё раз</button>
+    </div>
+
+  </main>
+
+  <script>
+    const code = document.getElementById('code');
+    const field = document.getElementById('countryField');
+    const btn = document.getElementById('countryBtn');
+    const list = document.getElementById('list');
+    const curFlag = document.getElementById('curFlag');
+    const curName = document.getElementById('curName');
+
+    // Формат: Название|код для подстановки|префиксы для распознавания (необязательно)
+    const RAW = `Австралия|+61;Австрия|+43;Азербайджан|+994;Албания|+355;Алжир|+213;Ангола|+244;Андорра|+376;Антигуа и Барбуда|+1268;Аргентина|+54;Армения|+374;Афганистан|+93;Багамы|+1242;Бангладеш|+880;Барбадос|+1246;Бахрейн|+973;Беларусь|+375;Белиз|+501;Бельгия|+32;Бенин|+229;Бермуды|+1441;Болгария|+359;Боливия|+591;Босния и Герцеговина|+387;Ботсвана|+267;Бразилия|+55;Бруней|+673;Буркина-Фасо|+226;Бурунди|+257;Бутан|+975;Вануату|+678;Великобритания|+44;Венгрия|+36;Венесуэла|+58;Вьетнам|+84;Габон|+241;Гаити|+509;Гайана|+592;Гамбия|+220;Гана|+233;Гватемала|+502;Гвинея|+224;Гвинея-Бисау|+245;Германия|+49;Гондурас|+504;Гонконг|+852;Гренада|+1473;Гренландия|+299;Греция|+30;Грузия|+995;Дания|+45;Джибути|+253;Доминика|+1767;Доминиканская Республика|+1809|+1809,+1829,+1849;Египет|+20;Замбия|+260;Зимбабве|+263;Израиль|+972;Индия|+91;Индонезия|+62;Иордания|+962;Ирак|+964;Иран|+98;Ирландия|+353;Исландия|+354;Испания|+34;Италия|+39;Йемен|+967;Кабо-Верде|+238;Казахстан|+7|+76,+77;Камбоджа|+855;Камерун|+237;Канада|+1|CA;Каймановы острова|+1345;Катар|+974;Кения|+254;Кипр|+357;Киргизия|+996;Кирибати|+686;Китай|+86;Колумбия|+57;Коморы|+269;Конго|+242;Конго (ДР)|+243;Косово|+383;Коста-Рика|+506;Кот-д’Ивуар|+225;Куба|+53;Кувейт|+965;Лаос|+856;Латвия|+371;Лесото|+266;Либерия|+231;Ливан|+961;Ливия|+218;Литва|+370;Лихтенштейн|+423;Люксембург|+352;Маврикий|+230;Мавритания|+222;Мадагаскар|+261;Макао|+853;Малави|+265;Малайзия|+60;Мали|+223;Мальдивы|+960;Мальта|+356;Марокко|+212;Маршалловы Острова|+692;Мексика|+52;Микронезия|+691;Мозамбик|+258;Молдова|+373;Монако|+377;Монголия|+976;Мьянма|+95;Намибия|+264;Науру|+674;Непал|+977;Нигер|+227;Нигерия|+234;Нидерланды|+31;Никарагуа|+505;Новая Зеландия|+64;Норвегия|+47;ОАЭ|+971;Оман|+968;Пакистан|+92;Палау|+680;Палестина|+970;Панама|+507;Папуа — Новая Гвинея|+675;Парагвай|+595;Перу|+51;Польша|+48;Португалия|+351;Пуэрто-Рико|+1787|+1787,+1939;Руанда|+250;Румыния|+40;Россия|+7;Сальвадор|+503;Самоа|+685;Сан-Марино|+378;Сан-Томе и Принсипи|+239;Саудовская Аравия|+966;Северная Корея|+850;Северная Македония|+389;Сейшелы|+248;Сенегал|+221;Сент-Винсент и Гренадины|+1784;Сент-Китс и Невис|+1869;Сент-Люсия|+1758;Сербия|+381;Сингапур|+65;Сирия|+963;Словакия|+421;Словения|+386;Соломоновы Острова|+677;Сомали|+252;Судан|+249;Суринам|+597;США|+1;Сьерра-Леоне|+232;Таджикистан|+992;Таиланд|+66;Тайвань|+886;Танзания|+255;Того|+228;Тонга|+676;Тринидад и Тобаго|+1868;Тувалу|+688;Тунис|+216;Туркменистан|+993;Турция|+90;Уганда|+256;Узбекистан|+998;Украина|+380;Уругвай|+598;Фарерские острова|+298;Фиджи|+679;Филиппины|+63;Финляндия|+358;Франция|+33;Хорватия|+385;ЦАР|+236;Чад|+235;Черногория|+382;Чехия|+420;Чили|+56;Швейцария|+41;Швеция|+46;Шри-Ланка|+94;Эквадор|+593;Экваториальная Гвинея|+240;Эритрея|+291;Эсватини|+268;Эстония|+372;Эфиопия|+251;ЮАР|+27;Южная Корея|+82;Южный Судан|+211;Ямайка|+1876;Япония|+81`;
+
+    const CANADA = '204,226,236,249,250,263,289,306,343,365,367,403,416,418,431,437,438,450,506,514,519,548,579,581,587,604,613,639,647,705,709,778,780,807,819,825,867,873,902,905'
+      .split(',').map(a => '+1' + a);
+
+    const countries = RAW.split(';').map(s => {
+      const [name, fill, extra] = s.split('|');
+      const prefixes = extra === 'CA' ? CANADA : extra ? extra.split(',') : [fill];
+      return { name, fill, prefixes };
+    }).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+
+    // Название:ISO-код (из него строится флаг)
+    const ISO = Object.fromEntries(`Австралия:AU;Австрия:AT;Азербайджан:AZ;Албания:AL;Алжир:DZ;Ангола:AO;Андорра:AD;Антигуа и Барбуда:AG;Аргентина:AR;Армения:AM;Афганистан:AF;Багамы:BS;Бангладеш:BD;Барбадос:BB;Бахрейн:BH;Беларусь:BY;Белиз:BZ;Бельгия:BE;Бенин:BJ;Бермуды:BM;Болгария:BG;Боливия:BO;Босния и Герцеговина:BA;Ботсвана:BW;Бразилия:BR;Бруней:BN;Буркина-Фасо:BF;Бурунди:BI;Бутан:BT;Вануату:VU;Великобритания:GB;Венгрия:HU;Венесуэла:VE;Вьетнам:VN;Габон:GA;Гаити:HT;Гайана:GY;Гамбия:GM;Гана:GH;Гватемала:GT;Гвинея:GN;Гвинея-Бисау:GW;Германия:DE;Гондурас:HN;Гонконг:HK;Гренада:GD;Гренландия:GL;Греция:GR;Грузия:GE;Дания:DK;Джибути:DJ;Доминика:DM;Доминиканская Республика:DO;Египет:EG;Замбия:ZM;Зимбабве:ZW;Израиль:IL;Индия:IN;Индонезия:ID;Иордания:JO;Ирак:IQ;Иран:IR;Ирландия:IE;Исландия:IS;Испания:ES;Италия:IT;Йемен:YE;Кабо-Верде:CV;Казахстан:KZ;Камбоджа:KH;Камерун:CM;Канада:CA;Каймановы острова:KY;Катар:QA;Кения:KE;Кипр:CY;Киргизия:KG;Кирибати:KI;Китай:CN;Колумбия:CO;Коморы:KM;Конго:CG;Конго (ДР):CD;Косово:XK;Коста-Рика:CR;Кот-д’Ивуар:CI;Куба:CU;Кувейт:KW;Лаос:LA;Латвия:LV;Лесото:LS;Либерия:LR;Ливан:LB;Ливия:LY;Литва:LT;Лихтенштейн:LI;Люксембург:LU;Маврикий:MU;Мавритания:MR;Мадагаскар:MG;Макао:MO;Малави:MW;Малайзия:MY;Мали:ML;Мальдивы:MV;Мальта:MT;Марокко:MA;Маршалловы Острова:MH;Мексика:MX;Микронезия:FM;Мозамбик:MZ;Молдова:MD;Монако:MC;Монголия:MN;Мьянма:MM;Намибия:NA;Науру:NR;Непал:NP;Нигер:NE;Нигерия:NG;Нидерланды:NL;Никарагуа:NI;Новая Зеландия:NZ;Норвегия:NO;ОАЭ:AE;Оман:OM;Пакистан:PK;Палау:PW;Палестина:PS;Панама:PA;Папуа — Новая Гвинея:PG;Парагвай:PY;Перу:PE;Польша:PL;Португалия:PT;Пуэрто-Рико:PR;Руанда:RW;Румыния:RO;Россия:RU;Сальвадор:SV;Самоа:WS;Сан-Марино:SM;Сан-Томе и Принсипи:ST;Саудовская Аравия:SA;Северная Корея:KP;Северная Македония:MK;Сейшелы:SC;Сенегал:SN;Сент-Винсент и Гренадины:VC;Сент-Китс и Невис:KN;Сент-Люсия:LC;Сербия:RS;Сингапур:SG;Сирия:SY;Словакия:SK;Словения:SI;Соломоновы Острова:SB;Сомали:SO;Судан:SD;Суринам:SR;США:US;Сьерра-Леоне:SL;Таджикистан:TJ;Таиланд:TH;Тайвань:TW;Танзания:TZ;Того:TG;Тонга:TO;Тринидад и Тобаго:TT;Тувалу:TV;Тунис:TN;Туркменистан:TM;Турция:TR;Уганда:UG;Узбекистан:UZ;Украина:UA;Уругвай:UY;Фарерские острова:FO;Фиджи:FJ;Филиппины:PH;Финляндия:FI;Франция:FR;Хорватия:HR;ЦАР:CF;Чад:TD;Черногория:ME;Чехия:CZ;Чили:CL;Швейцария:CH;Швеция:SE;Шри-Ланка:LK;Эквадор:EC;Экваториальная Гвинея:GQ;Эритрея:ER;Эсватини:SZ;Эстония:EE;Эфиопия:ET;ЮАР:ZA;Южная Корея:KR;Южный Судан:SS;Ямайка:JM;Япония:JP`
+      .split(';').map(s => s.split(':')));
+
+    const flag = name => ISO[name]
+      ? String.fromCodePoint(...[...ISO[name]].map(ch => 127397 + ch.charCodeAt(0)))
+      : '';
+    // ---------- Языки ----------
+    const T = {
+      ru: {
+        title: 'Telegram', country: 'Страна', phone: 'Номер телефона', keep: 'Запомнить меня',
+        next: 'Продолжить', qr: 'Вход по QR-коду', passkey: 'Вход с ключом доступа', lang: 'Continue in English',
+        code: 'Код', resend: 'Отправить код ещё раз', resendIn: 'Отправить код повторно через',
+        subLogin: 'Проверьте код страны и введите свой номер телефона.',
+        subCode: 'Мы отправили код в приложение <b>Telegram</b> на вашем другом устройстве.'
+      },
+      en: {
+        title: 'Telegram', country: 'Country', phone: 'Phone Number', keep: 'Keep me signed in',
+        next: 'Next', qr: 'Log in by QR Code', passkey: 'Log in with Passkey', lang: 'Продолжить на русском',
+        code: 'Code', resend: 'Send code again', resendIn: 'Resend code in',
+        subLogin: 'Please confirm your country code and enter your phone number.',
+        subCode: "We've sent the code to the <b>Telegram</b> app on your other device."
+      }
+    };
+    let lang = 'ru';
+    let stage = 'phone';
+    const t = k => T[lang][k];
+
+    let regionEn = null;
+    try { regionEn = new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) {}
+    function cname(c) {
+      if (lang === 'ru') return c.name;
+      const iso = ISO[c.name];
+      if (iso === 'XK') return 'Kosovo';
+      try { const n = regionEn && regionEn.of(iso); return n && n !== iso ? n : c.name; } catch (e) { return c.name; }
+    }
+
+    function buildList() {
+      const cur = current >= 0 ? countries[current] : null;
+      countries.sort((a, b) => cname(a).localeCompare(cname(b), lang));
+      list.innerHTML = countries.map((c, i) =>
+        `<li role="option" data-i="${i}"><span class="flag">${flag(c.name)}</span><span class="cname">${cname(c)}</span><span class="ccode">${c.fill}</span></li>`
+      ).join('');
+      setCurrent(cur ? countries.indexOf(cur) : -1);
+    }
+
+    function renderSubtitle() {
+      if (stage === 'code') { subtitle.innerHTML = t('subCode'); subtitle.classList.add('wide'); }
+      else { subtitle.textContent = t('subLogin'); subtitle.classList.remove('wide'); }
+    }
+
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('editBtn').setAttribute('aria-label', lang === 'ru' ? 'Изменить номер' : 'Edit phone number');
+      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+      renderSubtitle();
+      buildList();
+      hint.dataset.msg = '';
+    }
+
+    document.getElementById('langBtn').addEventListener('click', () => {
+      lang = lang === 'ru' ? 'en' : 'ru';
+      applyLang();
+    });
+
+    let current = -1;
+    function setCurrent(i) {
+      current = i;
+      curFlag.textContent = i < 0 ? '' : flag(countries[i].name);
+      curName.textContent = i < 0 ? '' : cname(countries[i]);
+      field.classList.toggle('filled', !!curName.textContent);
+      list.querySelectorAll('.sel').forEach(el => el.classList.remove('sel'));
+      if (i >= 0) list.children[i].classList.add('sel');
+    }
+
+    function openList() {
+      field.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      list.hidden = false;
+      if (current >= 0) {
+        const el = list.children[current];
+        list.scrollTop = el.offsetTop - list.clientHeight / 2 + el.offsetHeight / 2;
+      } else {
+        list.scrollTop = 0;
+      }
+    }
+    function closeList() {
+      field.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      list.hidden = true;
+    }
+
+    btn.addEventListener('click', () => list.hidden ? openList() : closeList());
+    document.addEventListener('click', e => { if (!field.contains(e.target)) closeList(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeList(); });
+
+    list.addEventListener('click', e => {
+      const li = e.target.closest('li');
+      if (!li) return;
+      const i = Number(li.dataset.i);
+      setCurrent(i);
+      code.value = countries[i].fill;
+      syncPhone();
+      closeList();
+      code.focus();
+    });
+
+    // Определяем страну по самому длинному совпавшему префиксу
+    function detect(v = code.value.replace(/\s/g, '')) {
+      let best = 0, found = [];
+      countries.forEach((c, i) => c.prefixes.forEach(p => {
+        if (!v.startsWith(p)) return;
+        if (p.length > best) { best = p.length; found = [i]; }
+        else if (p.length === best && !found.includes(i)) found.push(i);
+      }));
+      setCurrent(found.length ? (found.includes(current) ? current : found[0]) : -1);
+    }
+
+    code.addEventListener('input', () => {
+      let v = code.value.replace(/[^\d+]/g, '');
+      // «+» ставится сам: набрали 7 — получилось +7
+      const digits = v.replace(/\+/g, '');
+      v = (digits || v.startsWith('+')) ? '+' + digits : '';
+      detect(v);
+      code.value = format(v);
+      phoneField.classList.remove('error');
+      syncPhone();
+    });
+    code.addEventListener('keydown', e => { if (e.key === 'Enter') continueBtn.click(); });
+
+    // +7 993 183 2608
+    function format(v) {
+      if (current < 0 || !v.startsWith(countries[current].fill)) return v;
+      const cc = countries[current].fill;
+      const rest = v.slice(cc.length);
+      return [cc, rest.slice(0, 3), rest.slice(3, 6), rest.slice(6)].filter(Boolean).join(' ');
+    }
+
+    // Показываем «Продолжить» только когда номер похож на настоящий
+    function syncPhone() {
+      phoneField.classList.toggle('filled', code.value !== '');
+      const ok = /^\+\d{8,15}$/.test(code.value.replace(/\s/g, ''));
+      continueBtn.hidden = !ok;
+      viewPhone.classList.toggle('valid', ok);
+    }
+
+    function shake(el) {
+      el.classList.remove('shake');
+      void el.offsetWidth;
+      el.classList.add('shake');
+    }
+
+    // ---------- Экран кода ----------
+    const phoneField = code.closest('.field');
+    const continueBtn = document.getElementById('continueBtn');
+    const viewPhone = document.getElementById('viewPhone');
+    const viewCode = document.getElementById('viewCode');
+    const title = document.getElementById('title');
+    const subtitle = document.getElementById('subtitle');
+    const otp = document.getElementById('otp');
+    const otpField = otp.closest('.field');
+    const hint = document.getElementById('hint');
+    const resend = document.getElementById('resend');
+
+    const memes = {
+      ru: [
+        'Отправили ещё раз. Теперь точно придёт. Наверное.',
+        'Код уже в пути. Его несёт почтовый голубь 🕊️',
+        'Проверьте папку «Спам». Да, в SMS она тоже есть.',
+        'Попробуйте выйти на балкон — вдруг сеть ловит лучше 📡',
+        'Код не придёт. Мы тоже в шоке 🤷',
+        'Может, он уже пришёл, а вы не заметили? Нет. Не пришёл.'
+      ],
+      en: [
+        'Sent again. This time it will definitely arrive. Probably.',
+        'The code is on its way. Carried by a pigeon 🕊️',
+        'Check your spam folder. Yes, SMS has one too.',
+        'Try stepping onto the balcony, maybe the signal is better 📡',
+        "The code won't come. We're shocked too 🤷",
+        "Maybe it already arrived and you missed it? Nope. It didn't."
+      ]
+    };
+    const wrong = {
+      ru: [
+        'Неверный код. А откуда вы его взяли, если он не приходил? 🤨',
+        'Нет, не подходит. Попробуйте угадать ещё раз 🎲',
+        'Мимо. Код — это не «12345» 😅'
+      ],
+      en: [
+        'Wrong code. Where did you even get it if it never arrived? 🤨',
+        'Nope. Try guessing again 🎲',
+        'Missed. A code is not "12345" 😅'
+      ]
+    };
+    let timer = null, resends = 0, tries = 0;
+
+    function startTimer(sec) {
+      clearInterval(timer);
+      resend.disabled = true;
+      const tick = () => {
+        if (sec <= 0) {
+          clearInterval(timer);
+          resend.disabled = false;
+          return;
+        }
+        const m = Math.floor(sec / 60), s = String(sec % 60).padStart(2, '0');
+        hint.className = 'hint';
+        hint.textContent = (hint.dataset.msg ? hint.dataset.msg + '\n' : '') + `${t('resendIn')} ${m}:${s}`;
+        hint.style.whiteSpace = 'pre-line';
+        sec--;
+      };
+      tick();
+      timer = setInterval(tick, 1000);
+    }
+
+    const plane = document.querySelector('.plane');
+    const phoneLine = document.getElementById('phoneLine');
+    const phoneText = document.getElementById('phoneText');
+
+    function showCode() {
+      title.hidden = true;
+      phoneLine.hidden = false;
+      phoneText.textContent = code.value;
+      stage = 'code';
+      renderSubtitle();
+      subtitle.classList.add('wide');
+      viewPhone.hidden = true;
+      viewCode.hidden = false;
+      otp.value = '';
+      resends = 0; tries = 0;
+      hint.dataset.msg = '';
+      startTimer(30);
+      otp.focus();
+    }
+
+    continueBtn.addEventListener('click', () => {
+      const raw = code.value.replace(/\s/g, '');
+      if (!/^\+\d{8,15}$/.test(raw)) {
+        phoneField.classList.add('error');
+        shake(phoneField);
+        return;
+      }
+      showCode();
+    });
+
+    otp.addEventListener('input', () => {
+      otp.value = otp.value.replace(/\D/g, '');
+      otpField.classList.remove('error');
+      if (otp.value.length === 5) checkCode();
+    });
+
+    function checkCode() {
+      otpField.classList.add('error');
+      shake(otpField);
+      setTimeout(() => { otp.value = ''; otpField.classList.remove('error'); }, 900);
+      const W = wrong[lang];
+      const msg = W[tries++ % W.length];
+      clearInterval(timer);
+      hint.className = 'hint err';
+      hint.textContent = msg;
+      hint.dataset.msg = msg;
+      setTimeout(() => startTimer(resend.disabled ? 15 : 0), 1800);
+    }
+
+    resend.addEventListener('click', () => {
+      const M = memes[lang];
+      hint.dataset.msg = M[Math.min(resends, M.length - 1)];
+      resends++;
+      startTimer(15);
+    });
+
+    document.getElementById('editBtn').addEventListener('click', () => {
+      clearInterval(timer);
+      viewCode.hidden = true;
+      viewPhone.hidden = false;
+      phoneLine.hidden = true;
+      title.hidden = false;
+      title.textContent = t('title');
+      subtitle.classList.remove('wide');
+      stage = 'phone';
+      renderSubtitle();
+      syncPhone();
+      code.focus();
+    });
+
+    // ---------- Сохранение введённых данных ----------
+    const KEY = 'tg_login_state';
+    const keepBox = document.querySelector('.remember input');
+    function save() {
+      try {
+        localStorage.setItem(KEY, JSON.stringify({
+          lang, stage, phone: code.value, otp: otp.value, keep: keepBox.checked,
+          country: current >= 0 ? countries[current].name : null
+        }));
+      } catch (e) {}
+    }
+    code.addEventListener('input', save);
+    otp.addEventListener('input', save);
+    keepBox.addEventListener('change', save);
+    list.addEventListener('click', save);
+    document.getElementById('langBtn').addEventListener('click', save);
+    continueBtn.addEventListener('click', save);
+    document.getElementById('editBtn').addEventListener('click', save);
+
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    if (saved) {
+      if (saved.lang === 'en' || saved.lang === 'ru') lang = saved.lang;
+      keepBox.checked = saved.keep !== false;
+      code.value = saved.phone || '';
+    }
+    applyLang();
+    if (saved) {
+      const i = saved.country ? countries.findIndex(c => c.name === saved.country) : -1;
+      if (i >= 0) setCurrent(i); else detect();
+    }
+    syncPhone();
+    if (saved && saved.stage === 'code' && /^\+\d{8,15}$/.test(code.value.replace(/\s/g, ''))) {
+      showCode();
+      otp.value = (saved.otp || '').slice(0, 4);
+    }
+  </script>
+</body>
+</html>
